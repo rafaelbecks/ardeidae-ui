@@ -1,113 +1,32 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import uiStyles from './styles.js';
+import { ansiToHtml, isElectronAvailable } from './utils.js';
 
 class ArdeidaeUi extends LitElement {
   static properties = {
     header: { type: String },
   }
 
-  static styles = css`
-    :host {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      max-width: 1024px;
-      margin: 0 auto;
-      text-align: center;
-      border-radius: 20px;
-      color: #fff;
-      font-weight: 200;
-      background-color: #1f1f1f;
-      opacity: 1;
-      background-image:  linear-gradient(#575757 1px, transparent 1px), linear-gradient(to right, #575757 1px, #1f1f1f 1px);
-      background-position-x: 8px;
-      background-position-y: 11px;
-      background-size: 20px 20px;
-      }
-
-    main {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      justify-content: space-between
-    }
-
-    .main-container{
-      height: 100%;
-      width: 50%;
-      margin: 20px;
-    }
-
-    .left-module {
-      width: 100%;
-      height: 45vh;
-      margin: 6px;
-      background: #000;
-      border-radius: 20px;
-      opacity: 0.7;
-      display: flex;
-      font-weight: inherit;
-      padding: 10px;
-      text-align: center;
-      justify-content: center;
-      align-items: center;
-      h3 {
-        font-weight: 200;
-      }
-    }
-
-    #config-stream{
-      flex-direction: column;
-    }
-
-    #hand-container {
-      height: 100vh;
-      width: 50%;
-      margin: 5px;
-      #hand-three-js {
-        width: 100%;
-        height: 100%;
-      }
-
-      canvas {
-        display: block;
-        width: 496px;
-        height: 800px;
-        position: relative;
-        right: 12px;
-        border-radius: 20px;
-        bottom: 11px;
-      }
-      .model {
-        height: 93%;
-        border-radius: 20px;
-        opacity: 0.7;
-        display: flex;
-        font-weight: inherit;
-        padding: 10px;
-        text-align: center;
-        justify-content: center;
-        align-items: center;
-        margin: 20px
-      }
-      h3 {
-        font-weight: 200;
-      }
-    }
-  `;
+  static styles = uiStyles
 
   constructor() {
     super();
     this.angleSnapshot = { x:0, y:0, z: 0 }
+    this.logEntries = []
   }
 
   firstUpdated() {
     this.renderHandModel()
     this.listenOSCMessages()
+    this.listenLogEntry()
+  }
+
+  updated(){
+    const logEntriesContainer = this.renderRoot.getElementById('log-entries')
+    if(logEntriesContainer) logEntriesContainer.scrollTo(0, logEntriesContainer.scrollHeight)
   }
 
   renderHandModel() {
@@ -120,8 +39,6 @@ class ArdeidaeUi extends LitElement {
     const container = this.renderRoot.getElementById('hand-container');
     const rendererElement = this.renderRoot.getElementById('hand-three-js');
     const { clientWidth, clientHeight } = container;
-
-    console.log(clientWidth, clientHeight)
 
     const camera = new THREE.PerspectiveCamera(45, clientWidth  / clientHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -147,12 +64,10 @@ class ArdeidaeUi extends LitElement {
       const box = new THREE.Box3().setFromObject(this.model);
       const size = new THREE.Vector3();
       box.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z);
-
 
       const center = box.getCenter(new THREE.Vector3());
-      center.x = center.x - 0.05
-      center.y = center.y -0.04
+      center.x -= 0.05
+      center.y -= 0.04
       this.model.position.sub(center); // Center the model
 
       scene.add(this.model);
@@ -181,26 +96,40 @@ class ArdeidaeUi extends LitElement {
 
     // Handle resizing
     window.addEventListener('resize', () => {
-      const { clientWidth, clientHeight } = container;
-      renderer.setSize(clientWidth, clientHeight);
-      camera.aspect = clientWidth / clientHeight;
+      const { clientWidth: uiWith , clientHeight: uiHeight } = container;
+      renderer.setSize(uiWith, uiHeight);
+      camera.aspect = uiWith / uiHeight;
       camera.updateProjectionMatrix();
     });
   }
 
   listenOSCMessages(){
-    if(!window.electronAPI) return
+    if(!isElectronAvailable()) return
     window.electronAPI.onOSCMessage((message) => {
       if(message.address === '/accelerometer/angx'){
-        this.currentAngleX = message.value[0]
+        [this.currentAngleX] = message.value
       }
       if(message.address === '/accelerometer/angy'){
-        this.currentAngleY = message.value[0]
+        [this.currentAngleY] = message.value
       }
       if(message.address === '/accelerometer/angz'){
-        this.currentAngleZ = message.value[0]
+        [this.currentAngleZ] = message.value
       }
     })
+  }
+
+  listenLogEntry(){
+    if(!isElectronAvailable()) return
+    window.electronAPI.onLogEntry((message) => {
+      this.logEntries.push(message)
+      this.requestUpdate()
+    })
+  }
+
+  startSensors(){
+    if(!isElectronAvailable()) return
+    window.electronAPI.startSensors()
+    this.requestUpdate()
   }
 
   calibrate(){
@@ -212,7 +141,17 @@ class ArdeidaeUi extends LitElement {
       <main>
         <section class="main-container">
           <section id="event-stream" class="left-module">
-            <h3>EVENT STREAM</h3>
+            ${this.logEntries.length > 0
+            ? html`
+              <div id="log-entries">
+                ${this.logEntries.map(log => unsafeHTML(`<span>${ansiToHtml(log)}</span>`))}
+              </div>
+              `
+            : html`
+              <h3>EVENT STREAM</h3>
+              <button @click="${this.startSensors}">start sensors</button>
+              `
+            }
           </section>
           <section id="config-stream" class="left-module">
             <h3>CONFIG</h3>
