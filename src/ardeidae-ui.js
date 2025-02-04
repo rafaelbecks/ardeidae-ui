@@ -27,12 +27,14 @@ class ArdeidaeUi extends LitElement {
       cameraZ: 2,
       applyWireframe: true,
       customCenter: true,
+      // autoRotate: true,
     })
     this.renderModel({
       containerId: 'cube-render',
       modelPath: '../assets/lissajous.glb',
       cameraZ: 20,
       ignoreOffset: true,
+      // autoRotate: true,
     })
     this.listenOSCMessages()
     this.listenLogEntry()
@@ -143,6 +145,10 @@ class ArdeidaeUi extends LitElement {
     window.electronAPI.onLogEntry((message) => {
       this.logEntries.push(message)
       this.requestUpdate()
+
+      if(message.includes('Ring connected')){
+        this.ringConnected = true
+      }
     })
   }
 
@@ -182,8 +188,8 @@ class ArdeidaeUi extends LitElement {
                 <button @click="${this.calibrate}">calibrate position</button>
               </div>
               <div>
-               ${AccelerometerIcon(33)}
-               ${RingIcon(28)}
+               ${AccelerometerIcon(33, this.currentAngleY !== undefined ? '15A0FF' : 'FEFEFE')}
+               ${RingIcon(28, this.ringConnected ? '4EFC6E' : 'FEFEFE')}
               </div>
             </section>
           </section>
