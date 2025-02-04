@@ -13,12 +13,9 @@
       border-radius: 20px;
       color: #fff;
       font-weight: 200;
-      background-color: #1f1f1f;
-      opacity: 1;
-      background-image:  linear-gradient(#575757 1px, transparent 1px), linear-gradient(to right, #575757 1px, #1f1f1f 1px);
-      background-position-x: 8px;
-      background-position-y: 11px;
-      background-size: 20px 20px;
+          background-image: url("../assets/noisy.png");
+          background-repeat: no-repeat;
+          background-size: cover;
       }
 
     main {
@@ -39,7 +36,7 @@
       width: 100%;
       height: 45vh;
       margin: 6px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(2px);
       border-radius: 20px;
       display: flex;
@@ -64,27 +61,27 @@
         height: 270px;
         width: 494px;
       }
+    }
 
-      .toolbar {
-        border-radius: 20px;
-        background-color: #1B1A1A;
-        width: 90%;
+    .toolbar {
+      border-radius: 20px;
+      background-color: #1B1A1A;
+      width: 90%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 55px;
+      padding: 0px 15px;
+
+      .config-section{
         display: flex;
         justify-content: space-between;
+        width: 50%;
         align-items: center;
-        height: 55px;
-        padding: 0px 15px;
+      }
 
-        .config-section{
-          display: flex;
-          justify-content: space-between;
-          width: 50%;
-          align-items: center;
-        }
-
-        svg {
-          cursor: pointer;
-        }
+      svg {
+        cursor: pointer;
       }
     }
 
@@ -93,6 +90,8 @@
       width: 50%;
       margin: 5px;
       #hand-three-js {
+        position: relative;
+        left: 7px;
         width: 100%;
         height: 100%;
       }
@@ -117,10 +116,17 @@
         text-align: center;
         justify-content: center;
         align-items: center;
-        margin: 20px
+        margin: 20px;
+        flex-direction: column;
       }
       h3 {
         font-weight: 200;
+      }
+
+      button {
+        width: 95px;
+        padding: 0;
+        span { width: 45px; }
       }
     }
 
