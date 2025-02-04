@@ -7,7 +7,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      max-width: 1024px;
+      max-width: 1128px;
       margin: 0 auto;
       text-align: center;
       border-radius: 20px;
@@ -56,6 +56,36 @@
 
     #config-stream{
       flex-direction: column;
+      justify-content: space-between;
+      h3 {
+        margin-bottom: 0;
+      }
+      #cube-render{
+        height: 270px;
+        width: 494px;
+      }
+
+      .toolbar {
+        border-radius: 20px;
+        background-color: #1B1A1A;
+        width: 90%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 55px;
+        padding: 0px 15px;
+
+        .config-section{
+          display: flex;
+          justify-content: space-between;
+          width: 50%;
+          align-items: center;
+        }
+
+        svg {
+          cursor: pointer;
+        }
+      }
     }
 
     #hand-container {

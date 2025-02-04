@@ -14,6 +14,11 @@
     "start": "web-dev-server"
   },
   "dependencies": {
+    "@jsfe/core": "^0.0.5",
+    "@jsfe/form": "^0.4.0",
+    "@jsfe/shoelace": "^0.4.0",
+    "@jsfe/system": "^0.3.0",
+    "jelly-switch": "^0.2.3",
     "lit": "^3.1.4",
     "three": "^0.173.0"
   },
