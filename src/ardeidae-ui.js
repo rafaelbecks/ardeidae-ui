@@ -16,7 +16,6 @@ class ArdeidaeUi extends LitElement {
 
   constructor() {
     super();
-    this.angleSnapshot = { x:0, y:0, z: 0 }
     this.logEntries = []
   }
 
@@ -105,9 +104,9 @@ class ArdeidaeUi extends LitElement {
         scene.rotation.y += 0.02
       }
       if (this.model) {
-        if (this.currentAngleX) scene.rotation.x = THREE.MathUtils.degToRad(this.currentAngleX) - (ignoreOffset ? 0 : THREE.MathUtils.degToRad(this.angleSnapshot.x))
-        if (this.currentAngleY) scene.rotation.y = THREE.MathUtils.degToRad(this.currentAngleY) - (ignoreOffset ? 0 : THREE.MathUtils.degToRad(this.angleSnapshot.y))
-        if (this.currentAngleZ) scene.rotation.z = THREE.MathUtils.degToRad(this.currentAngleZ) - (ignoreOffset ? 0 : THREE.MathUtils.degToRad(this.angleSnapshot.z))
+        if (this.currentAngleX) scene.rotation.x = ignoreOffset ? THREE.MathUtils.degToRad(this.currentAngleX) : THREE.MathUtils.degToRad(this.currentOffsetX || this.currentAngleX)
+        if (this.currentAngleY) scene.rotation.y = ignoreOffset ? THREE.MathUtils.degToRad(this.currentAngleY) : THREE.MathUtils.degToRad(this.currentOffsetY || this.currentAngleX)
+        if (this.currentAngleZ) scene.rotation.z = ignoreOffset ? THREE.MathUtils.degToRad(this.currentAngleZ) : THREE.MathUtils.degToRad(this.currentOffsetZ || this.currentAngleY)
       }
       renderer.render(scene, camera)
     }
@@ -137,6 +136,18 @@ class ArdeidaeUi extends LitElement {
         [this.currentAngleZ] = message.value
         this.renderRoot.getElementById('angz').innerText = this.currentAngleZ.toFixed(2)
       }
+      if(message.address === '/accelerometer/offsetx'){
+        [this.currentOffsetX] = message.value
+        this.renderRoot.getElementById('angx').innerText = this.currentAngleX.toFixed(2)
+      }
+      if(message.address === '/accelerometer/offsety'){
+        [this.currentOffsetY] = message.value
+        this.renderRoot.getElementById('angy').innerText = this.currentAngleY.toFixed(2)
+      }
+      if(message.address === '/accelerometer/offsetz'){
+        [this.currentOffsetZ] = message.value
+        this.renderRoot.getElementById('angz').innerText = this.currentAngleZ.toFixed(2)
+      }
     })
   }
 
@@ -159,7 +170,7 @@ class ArdeidaeUi extends LitElement {
   }
 
   calibrate(){
-    this.angleSnapshot = { x: this.currentAngleX, y: this.currentAngleY, z: this.currentAngleZ }
+    window.electronAPI.setOffsetCoordinates({ x: this.currentAngleX, y: this.currentAngleY, z: this.currentAngleZ })
   }
 
   render() {
