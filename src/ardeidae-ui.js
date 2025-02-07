@@ -282,7 +282,7 @@ class ArdeidaeUi extends LitElement {
           <section class="model">
             <div id="hand-three-js">
             </div>
-            <section class="toolbar">
+            <section class="toolbar readings">
               <button  style="background: #ff3c3c;"><strong>X &nbsp;</strong> = &nbsp;<span id="angx"></span></button>
               <button  style="background: #54a449;"><strong>Y &nbsp;</strong> = &nbsp;<span id="angy"></span></button>
               <button  style="background: #3838ff;"><strong>Z &nbsp;</strong> = &nbsp;<span id="angz"></span></button>

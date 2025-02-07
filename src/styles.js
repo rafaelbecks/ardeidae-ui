@@ -16,6 +16,23 @@
           background-image: url("../assets/noisy.png");
           background-repeat: no-repeat;
           background-size: cover;
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background-color: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
       }
 
     main {
@@ -34,7 +51,7 @@
     }
 
     .left-module {
-      width: 100%;
+      width: 555px;
       height: 45vh;
       margin: 6px;
       background: rgba(0, 0, 0, 0.8);
@@ -73,7 +90,6 @@
       align-items: center;
       min-height: 55px;
       padding: 0px 15px;
-      app-region: drag;
       .config-section{
         display: flex;
         justify-content: space-between;
@@ -84,6 +100,10 @@
       svg {
         cursor: pointer;
       }
+    }
+
+    .readings {
+      app-region: drag;
     }
 
     #hand-container {
@@ -142,13 +162,13 @@
       height: 30px;
       border: none;
       color: #fff;
-      font-family: 'Inter';
+      font-family: 'Pixer';
       cursor: pointer;
     }
 
     #event-stream{
       div {
-        font-family: monospace;
+        font-family: 'Pixer';
         text-align: left;
         width: 100%;
         max-height: 44vh;
@@ -159,7 +179,7 @@
       }
 
       span {
-        font-family: monospace;
+        font-family: 'Iosevka Term';
         display: flex;
         justify-content: space-between;
       }
