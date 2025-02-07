@@ -10,7 +10,7 @@
       max-width: 1128px;
       margin: 0 auto;
       text-align: center;
-      border-radius: 20px;
+      /* border-radius: 20px; */
       color: #fff;
       font-weight: 200;
           background-image: url("../assets/noisy.png");
@@ -71,9 +71,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 55px;
+      min-height: 55px;
       padding: 0px 15px;
-
+      app-region: drag;
       .config-section{
         display: flex;
         justify-content: space-between;

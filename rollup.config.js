@@ -4,6 +4,7 @@ import { rollupPluginHTML as html } from '@web/rollup-plugin-html';
 import { importMetaAssets } from '@web/rollup-plugin-import-meta-assets';
 import esbuild from 'rollup-plugin-esbuild';
 import { generateSW } from 'rollup-plugin-workbox';
+import copy from 'rollup-plugin-copy';
 import path from 'path';
 
 export default {
@@ -53,6 +54,13 @@ export default {
         ],
       ],
     }),
+    /** Copy assets from the 'assets' folder to 'dist/assets' */
+    copy({
+      targets: [
+        { src: 'assets/**/*.{png,jpg,jpeg,gif,svg,glb}', dest: 'dist/assets' },
+      ],
+      flatten: false,
+    }),
     /** Create and inject a service worker */
     generateSW({
       globIgnores: ['polyfills/*.js', 'nomodule-*.js'],
@@ -61,8 +69,8 @@ export default {
       swDest: path.join('dist', 'sw.js'),
       // directory to match patterns against to be precached
       globDirectory: path.join('dist'),
-      // cache any html js and css by default
-      globPatterns: ['**/*.{html,js,css,webmanifest}'],
+      // cache html, js, css, images, and glb files
+      globPatterns: ['**/*.{html,js,css,webmanifest,png,jpg,jpeg,gif,svg,glb}'],
       skipWaiting: true,
       clientsClaim: true,
       runtimeCaching: [{ urlPattern: 'polyfills/*.js', handler: 'CacheFirst' }],

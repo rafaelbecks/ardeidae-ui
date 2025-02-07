@@ -26,15 +26,16 @@ class ArdeidaeUi extends LitElement {
       cameraZ: 2,
       applyWireframe: true,
       customCenter: true,
-      // autoRotate: true,
+      autoRotate: true,
     })
     this.renderModel({
       containerId: 'cube-render',
       modelPath: '../assets/lissajous.glb',
       cameraZ: 20,
       ignoreOffset: true,
-      // autoRotate: true,
+      autoRotate: true,
     })
+    // this.renderDistanceDetectionGraph()
     this.listenOSCMessages()
     this.listenLogEntry()
   }
@@ -171,6 +172,78 @@ class ArdeidaeUi extends LitElement {
 
   calibrate(){
     window.electronAPI.setOffsetCoordinates({ x: this.currentAngleX, y: this.currentAngleY, z: this.currentAngleZ })
+  }
+
+  renderDistanceDetectionGraph(){
+    // Setup Scene, Camera, Renderer
+    const scene = new THREE.Scene();
+    const container = this.renderRoot.getElementById('cube-render')
+    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(3, 1, 4);
+    camera.lookAt(0, 0, 0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    renderer.setSize(container.clientWidth, container.clientHeight)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    container.appendChild(renderer.domElement);
+    scene.background = null
+
+    // Add a Grid Helper (ground reference)
+    const gridHelper = new THREE.GridHelper(7.5, 10);
+    scene.add(gridHelper);
+
+    // Add Axis Helper
+    const axesHelper = new THREE.AxesHelper(2);
+    scene.add(axesHelper);
+
+    // Sensor Origin (small sphere)
+    const sensorGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+    const sensorMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const sensorOrigin = new THREE.Mesh(sensorGeometry, sensorMaterial);
+    sensorOrigin.position.set(0, 0, 0);
+    scene.add(sensorOrigin);
+
+    // Target Board (blue plane)
+    const boardGeometry = new THREE.PlaneGeometry(1, 1);
+    const boardMaterial = new THREE.MeshBasicMaterial({ color: 0x00FFFF, side: THREE.DoubleSide });
+    const targetBoard = new THREE.Mesh(boardGeometry, boardMaterial);
+
+    targetBoard.position.set(3, 0, 0); // Initial position
+    targetBoard.rotation.y = Math.PI / 2; // Rotate 90 degrees around Y-axis
+    scene.add(targetBoard);
+
+    // LIDAR Beam (red line from sensor to target)
+    const lidarMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000 });
+    const lidarGeometry = new THREE.BufferGeometry().setFromPoints([
+        sensorOrigin.position,
+        targetBoard.position
+    ]);
+    const lidarBeam = new THREE.Line(lidarGeometry, lidarMaterial);
+    scene.add(lidarBeam);
+
+    // Position Camera
+    camera.position.set(5, 2, 5);
+    camera.lookAt(0, 0, 0);
+
+    // Animate and Update Lidar Beam
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Example: Simulating distance reading (replace with real sensor data)
+        // let sensorDistance = Math.random() * 3 + 1; // Fake distance for testing
+        // targetBoard.position.x = sensorDistance;
+
+        // Update Lidar Beam Line
+        lidarBeam.geometry.setFromPoints([
+            sensorOrigin.position.clone(),
+            targetBoard.position.clone()
+        ]);
+
+        renderer.render(scene, camera);
+    }
+
+    // Start Animation Loop
+    animate();
   }
 
   render() {
