@@ -23,10 +23,10 @@ class Caos extends LitElement {
     }
 
     #caos-render{
-      width: ${mobileCheck() ? css`100vw` : css`800px`};
-      height: 400px;
-      top: calc(100vh / 2 - 200px);
-      left: calc(100vw / 2 - ${mobileCheck() ? css`50vw` : css`400px`});
+      width: ${mobileCheck() ? css`100vw` : css`100vw`};
+      height: 100vh;
+      top: calc(100vh / 2 - 50vh);
+      left: calc(100vw / 2 - ${mobileCheck() ? css`50vw` : css`50vw`});
       position: absolute;
       z-index: 1;
     }
@@ -35,7 +35,7 @@ class Caos extends LitElement {
       display: block;
       width: 100%;
       height: 100%;
-      opacity: 0.8;
+      opacity: 0.7;
     }
 
     shader-art canvas {
@@ -48,6 +48,7 @@ class Caos extends LitElement {
       position: absolute;
       top: 0;
       right: 0;
+      z-index: 10;
       margin: 10px 10px 0 0;
 
       button {
@@ -72,7 +73,7 @@ class Caos extends LitElement {
     this.renderModel({
       containerId: 'caos-render',
       modelPath: '../assets/caos.glb',
-      cameraZ: -5.5,
+      cameraZ: -10,
       ignoreOffset: true,
       autoRotate: true,
       // applyWireframe: true
@@ -91,7 +92,7 @@ class Caos extends LitElement {
 
     const container = this.renderRoot.getElementById(containerId)
     const { clientWidth, clientHeight } = container
-
+    const clock = new THREE.Clock();
     const camera = new THREE.PerspectiveCamera(45, clientWidth / clientHeight, 0.1, 1000)
     camera.position.z = cameraZ
     camera.lookAt(0, 0, 0)
@@ -110,7 +111,7 @@ class Caos extends LitElement {
 
     const loader = new GLTFLoader()
 
-    this.loadHDR('../assets/satara.hdr')
+    this.loadHDR('../assets/studio.hdr')
 
     loader.load(modelPath, (gltf) => {
       this.model = gltf.scene
@@ -122,18 +123,16 @@ class Caos extends LitElement {
           metalness: 1,
           roughness: 0,
           envMapIntensity: 1,
+          emissive: new THREE.Color(0x111111),
+          emissiveIntensity: 0.2,
       })
 
       this.model.traverse((child) => {
         if (child.isMesh) {
-          if (applyWireframe) {
-            child.material.wireframe = true
-            child.material.transparent = false;
-            child.material.opacity = 1;
-          } else {
-            child.material = material;
-            child.material.needsUpdate = true
-          }
+          child.material = material;
+          child.geometry.computeVertexNormals();
+          child.geometry.attributes.position.original = child.geometry.attributes.position.array.slice(); // Store original positions
+          child.material.needsUpdate = true
         }
       })
       const box = new THREE.Box3().setFromObject(this.model)
@@ -164,6 +163,22 @@ class Caos extends LitElement {
       if (autoRotate) {
         this.scene.rotation.y += 0.015
       }
+
+      this.model.traverse((child) => {
+          if (child.isMesh) {
+              const time = clock.getElapsedTime();
+              const {position} = child.geometry.attributes;
+              const {original} = position;
+              for (let i = 0; i < position.count; i++) {
+                  const x = original[i * 3];
+                  const z = original[i * 3 + 1];
+
+                  // Apply wave-like distortion
+                  position.array[i * 3 + 1] = z + Math.sin(x * 7 + time) * 0.09;
+              }
+              position.needsUpdate = true;
+          }
+      })
       this.renderer.render(this.scene, camera)
     }
 
