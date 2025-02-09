@@ -5,6 +5,8 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { ShaderArt } from 'https://esm.sh/shader-art';
 import { UniformPlugin } from 'https://esm.sh/@shader-art/plugin-uniform';
 
+import { mobileCheck } from './utils'
+
 ShaderArt.register([() => new UniformPlugin()]);
 
 
@@ -21,11 +23,11 @@ class Caos extends LitElement {
     }
 
     #caos-render{
-      width: 800px;
+      width: ${mobileCheck() ? css`100vw` : css`800px`};
       height: 400px;
-      position: absolute;
       top: calc(100vh / 2 - 200px);
-      left: calc(100vw / 2 - 400px);
+      left: calc(100vw / 2 - ${mobileCheck() ? css`50vw` : css`400px`});
+      position: absolute;
       z-index: 1;
     }
 
@@ -85,7 +87,7 @@ class Caos extends LitElement {
     });
   }
 
-  renderModel({ containerId, modelPath, cameraZ, applyWireframe = false, autoRotate = false, customCenter = false, ignoreOffset = false }) {
+  renderModel({ containerId, modelPath, cameraZ, applyWireframe = false, autoRotate = false, customCenter = false, }) {
 
     const container = this.renderRoot.getElementById(containerId)
     const { clientWidth, clientHeight } = container
