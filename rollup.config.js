@@ -57,7 +57,7 @@ export default {
     /** Copy assets from the 'assets' folder to 'dist/assets' */
     copy({
       targets: [
-        { src: 'assets/**/*.{png,jpg,jpeg,gif,svg,glb}', dest: 'dist/assets' },
+        { src: 'assets/**/*.{png,jpg,jpeg,gif,svg,glb,hdr}', dest: 'dist/assets' },
       ],
       flatten: false,
     }),
@@ -70,7 +70,7 @@ export default {
       // directory to match patterns against to be precached
       globDirectory: path.join('dist'),
       // cache html, js, css, images, and glb files
-      globPatterns: ['**/*.{html,js,css,webmanifest,png,jpg,jpeg,gif,svg,glb}'],
+      globPatterns: ['**/*.{html,js,css,webmanifest,png,jpg,jpeg,gif,svg,glb, hdr}'],
       skipWaiting: true,
       clientsClaim: true,
       runtimeCaching: [{ urlPattern: 'polyfills/*.js', handler: 'CacheFirst' }],

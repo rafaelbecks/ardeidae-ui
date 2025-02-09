@@ -46,7 +46,10 @@
     "extends": [
       "@open-wc",
       "prettier"
-    ]
+    ],
+    "rules": {
+      "no-param-reassign": "off"
+    }
   },
   "prettier": {
     "singleQuote": true,
