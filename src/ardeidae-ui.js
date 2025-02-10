@@ -17,6 +17,7 @@ class ArdeidaeUi extends LitElement {
   constructor() {
     super();
     this.logEntries = []
+    this.currentDistance = 0
   }
 
   firstUpdated() {
@@ -28,14 +29,14 @@ class ArdeidaeUi extends LitElement {
       customCenter: true,
       autoRotate: true,
     })
-    this.renderModel({
-      containerId: 'cube-render',
-      modelPath: '../assets/lissajous.glb',
-      cameraZ: 20,
-      ignoreOffset: true,
-      autoRotate: true,
-    })
-    // this.renderDistanceDetectionGraph()
+    // this.renderModel({
+    //   containerId: 'cube-render',
+    //   modelPath: '../assets/lissajous.glb',
+    //   cameraZ: 20,
+    //   ignoreOffset: true,
+    //   autoRotate: true,
+    // })
+    this.renderDistanceDetectionGraph()
     this.listenOSCMessages()
     this.listenLogEntry()
   }
@@ -149,6 +150,10 @@ class ArdeidaeUi extends LitElement {
         [this.currentOffsetZ] = message.value
         this.renderRoot.getElementById('angz').innerText = this.currentAngleZ.toFixed(2)
       }
+
+      if(message.address === '/tfluna'){
+        this.currentDistance = message.value > 40 ? 40 : message.value
+      }
     })
   }
 
@@ -175,76 +180,97 @@ class ArdeidaeUi extends LitElement {
   }
 
   renderDistanceDetectionGraph(){
-    // Setup Scene, Camera, Renderer
-    const scene = new THREE.Scene();
-    const container = this.renderRoot.getElementById('cube-render')
-    const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(3, 1, 4);
-    camera.lookAt(0, 0, 0);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      // Setup Scene, Camera, Renderer
+      const scene = new THREE.Scene();
+      const container = this.renderRoot.getElementById('cube-render');
+      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(3, 1, 4);
+      camera.lookAt(0, 0, 0);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+      scene.background = null;
 
-    renderer.setSize(container.clientWidth, container.clientHeight)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    container.appendChild(renderer.domElement);
-    scene.background = null
+      // Add a Grid Helper (ground reference)
+      const gridHelper = new THREE.GridHelper(7.5, 10);
+      scene.add(gridHelper);
 
-    // Add a Grid Helper (ground reference)
-    const gridHelper = new THREE.GridHelper(7.5, 10);
-    scene.add(gridHelper);
+      // Add Axis Helper
+      const axesHelper = new THREE.AxesHelper(2);
+      scene.add(axesHelper);
 
-    // Add Axis Helper
-    const axesHelper = new THREE.AxesHelper(2);
-    scene.add(axesHelper);
+      // Sensor Origin (small sphere)
+      const sensorGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+      const sensorMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const sensorOrigin = new THREE.Mesh(sensorGeometry, sensorMaterial);
+      sensorOrigin.position.set(0, 0, 0);
+      scene.add(sensorOrigin);
 
-    // Sensor Origin (small sphere)
-    const sensorGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-    const sensorMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    const sensorOrigin = new THREE.Mesh(sensorGeometry, sensorMaterial);
-    sensorOrigin.position.set(0, 0, 0);
-    scene.add(sensorOrigin);
+      // Reflective Sphere
+      const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(128, { format: THREE.RGBAFormat });
+      const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRenderTarget);
+      scene.add(cubeCamera);
 
-    // Target Board (blue plane)
-    const boardGeometry = new THREE.PlaneGeometry(1, 1);
-    const boardMaterial = new THREE.MeshBasicMaterial({ color: 0x00FFFF, side: THREE.DoubleSide });
-    const targetBoard = new THREE.Mesh(boardGeometry, boardMaterial);
+      const sphereMaterial = new THREE.MeshStandardMaterial({
+          envMap: cubeRenderTarget.texture,
+          metalness: 1,
+          roughness: 0.3,
+          color: 0x30B0FF
+      });
+      const reflectiveSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      reflectiveSphere.position.set(3, 0, 0);
+      scene.add(reflectiveSphere);
 
-    targetBoard.position.set(3, 0, 0); // Initial position
-    targetBoard.rotation.y = Math.PI / 2; // Rotate 90 degrees around Y-axis
-    scene.add(targetBoard);
+      // LIDAR Beam (red line from sensor to target)
+      const lidarMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000 });
+      const lidarGeometry = new THREE.BufferGeometry().setFromPoints([
+          sensorOrigin.position,
+          reflectiveSphere.position
+      ]);
+      const lidarBeam = new THREE.Line(lidarGeometry, lidarMaterial);
+      scene.add(lidarBeam);
 
-    // LIDAR Beam (red line from sensor to target)
-    const lidarMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000 });
-    const lidarGeometry = new THREE.BufferGeometry().setFromPoints([
-        sensorOrigin.position,
-        targetBoard.position
-    ]);
-    const lidarBeam = new THREE.Line(lidarGeometry, lidarMaterial);
-    scene.add(lidarBeam);
+      // Position Camera
+      camera.position.set(5, 2, 5);
+      camera.lookAt(0, 0, 0);
 
-    // Position Camera
-    camera.position.set(5, 2, 5);
-    camera.lookAt(0, 0, 0);
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+      ambientLight.intensity = 20
+      scene.add(ambientLight);
 
-    // Animate and Update Lidar Beam
-    function animate() {
-        requestAnimationFrame(animate);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 5, 5);
+      directionalLight.intensity = 9
+      scene.add(directionalLight);
 
-        // Example: Simulating distance reading (replace with real sensor data)
-        // let sensorDistance = Math.random() * 3 + 1; // Fake distance for testing
-        // targetBoard.position.x = sensorDistance;
+      // Animate and Update Lidar Beam
+      const animate = () => {
+          requestAnimationFrame(animate);
 
-        // Update Lidar Beam Line
-        lidarBeam.geometry.setFromPoints([
-            sensorOrigin.position.clone(),
-            targetBoard.position.clone()
-        ]);
+          reflectiveSphere.position.x = this.currentDistance / 10;
 
-        renderer.render(scene, camera);
-    }
+          // Update Lidar Beam Line
+          lidarBeam.geometry.setFromPoints([
+              sensorOrigin.position.clone(),
+              reflectiveSphere.position.clone()
+          ]);
 
-    // Start Animation Loop
-    animate();
+          // Update Cube Camera for reflections
+          reflectiveSphere.visible = false;
+          cubeCamera.position.copy(reflectiveSphere.position);
+          cubeCamera.update(renderer, scene);
+          reflectiveSphere.visible = true;
+
+          renderer.render(scene, camera);
+      }
+
+      // Start Animation Loop
+      animate();
   }
+
 
   render() {
     return html`
@@ -264,7 +290,7 @@ class ArdeidaeUi extends LitElement {
             }
           </section>
           <section id="config-stream" class="left-module">
-            <h3>SENSOR POSITION</h3>
+            <h3>SENSOR DISTANCE</h3>
             <div id="cube-render"></div>
             <section class="toolbar">
               <div class="config-section">
